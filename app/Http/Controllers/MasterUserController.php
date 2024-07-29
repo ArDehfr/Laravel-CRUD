@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class MasterUserController extends Controller
@@ -12,7 +13,8 @@ class MasterUserController extends Controller
      */
     public function index()
     {
-        return view('users.index');
+        $users = User::all();
+        return view('users.index', compact('users'));
     }
 
     /**
@@ -28,38 +30,47 @@ class MasterUserController extends Controller
      */
     public function store(UserRequest $request)
     {
-        return $request;
+        User::create($request->validated());
+        return redirect()->route('data-users.index')->with('success', 'User created successfully.');
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(User $user)
     {
-        //
+        return view('users.show', compact('user'));
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(User $data_user)
     {
-        //
+        return view('users.edit', compact('data_user'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UserRequest $request, User $data_user)
     {
-        //
-    }
+        $data = [
+            'name' => $request->name,
+            'email' => $request->email
+        ];
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        if ($request->filled('password')) {
+            $data['password'] = bcrypt($request->password);
+        }
+
+        $update = $data_user->update($data);
+
+        if ($update) {
+            return redirect()->route('data-users.index')->with('success', 'User updated successfully.');
+        } else {
+            return back()->withErrors(['msg' => 'User update failed. Please try again.']);
+        }
     }
+   
 }
